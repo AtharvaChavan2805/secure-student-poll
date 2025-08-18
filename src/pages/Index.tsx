@@ -1,14 +1,78 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { WalletConnection } from '@/components/WalletConnection';
+import { VotingDashboard } from '@/components/VotingDashboard';
+import { AdminDashboard } from '@/components/AdminDashboard';
+import { useBlockchainVoting } from '@/hooks/useBlockchainVoting';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  const {
+    currentStudent,
+    candidates,
+    votes,
+    isConnected,
+    isAdmin,
+    totalVotes,
+    connectWallet,
+    disconnectWallet,
+    loginAsAdmin,
+    addCandidate,
+    castVote,
+    getResults
+  } = useBlockchainVoting();
+
+  const handleConnect = async (studentData: { name: string; email: string; studentId: string }) => {
+    setIsConnecting(true);
+    try {
+      await connectWallet(studentData);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleAdminLogin = async (password: string) => {
+    return await loginAsAdmin(password);
+  };
+
+  if (!isConnected) {
+    return (
+      <WalletConnection 
+        onConnect={handleConnect}
+        onAdminLogin={handleAdminLogin}
+        isConnecting={isConnecting}
+      />
+    );
+  }
+
+  if (isAdmin) {
+    return (
+      <AdminDashboard
+        candidates={candidates}
+        votes={votes}
+        totalVotes={totalVotes}
+        onAddCandidate={addCandidate}
+        onDisconnect={disconnectWallet}
+        getResults={getResults}
+      />
+    );
+  }
+
+  if (currentStudent) {
+    return (
+      <VotingDashboard
+        student={currentStudent}
+        candidates={candidates}
+        votes={votes}
+        totalVotes={totalVotes}
+        onVote={castVote}
+        onDisconnect={disconnectWallet}
+        getResults={getResults}
+      />
+    );
+  }
+
+  return null;
 };
 
 export default Index;
